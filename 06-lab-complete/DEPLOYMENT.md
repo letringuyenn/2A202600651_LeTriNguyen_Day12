@@ -1,10 +1,20 @@
 # Deployment Information
 
 ## Public URL
-_Fill this in after deploying to Railway or Render._
+TODO - fill after Railway/Render deployment
 
 ## Platform
 Railway recommended for the fastest path, or Render if you prefer Blueprint-style deployment.
+
+## Verified Status
+
+- Production checker: `20/20` checks passed (`100%`)
+- Docker image: built successfully with a multi-stage Dockerfile
+- Docker Compose: agent and Redis containers are healthy
+- `GET /health`: `200`, status `ok`
+- `GET /ready`: `200`, ready `true`
+- `POST /ask`: `200` with a valid `X-API-Key`
+- `POST /ask`: `401` without an API key
 
 ## Local Setup
 
@@ -23,7 +33,7 @@ Copy-Item .env.example .env
 
 ### 3. Run the app locally
 ```powershell
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Production Readiness Check
@@ -45,7 +55,10 @@ docker build -t day12-agent .
 
 ### Run compose stack
 ```powershell
-docker-compose up --build
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+docker-compose ps
 ```
 
 If Docker asks for a login or hits image pull limits, sign in to Docker Hub or retry later from a logged-in session.
@@ -68,18 +81,25 @@ Set these before deploying:
 ## Deployment Options
 
 ### Railway
-1. Install Railway CLI.
-2. Login.
-3. `railway init`
-4. Set variables.
-5. `railway up`
-6. Get the public URL with `railway domain`
+1. Open Railway and create a new project from the GitHub repository.
+2. Set the service root directory to `06-lab-complete`.
+3. Railway will use `railway.toml` and the Dockerfile.
+4. Add the environment variables listed above.
+5. Add a Railway Redis service and set `REDIS_URL` to its connection URL.
+6. Deploy and copy the generated public domain.
+
+CLI alternative after installing and logging in:
+```powershell
+railway init
+railway up
+railway domain
+```
 
 ### Render
 1. Push the repo to GitHub.
-2. Create a new Blueprint service.
-3. Let Render read `render.yaml`.
-4. Set secrets in the dashboard.
+2. Create a new Blueprint or Docker Web Service.
+3. Set the root directory to `06-lab-complete`.
+4. Use `render.yaml`, then verify generated secrets in the dashboard.
 5. Deploy and copy the public URL.
 
 ## Endpoints to Test After Deploy
@@ -107,4 +127,3 @@ curl -X POST https://YOUR_PUBLIC_URL/ask `
 - Do not commit a real `.env` file.
 - Keep `.env.example` as the template only.
 - Add screenshots of the deployed service to the repository after deployment.
-

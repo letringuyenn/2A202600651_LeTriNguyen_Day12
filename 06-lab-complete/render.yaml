@@ -1,23 +1,27 @@
 services:
   - type: web
-    name: ai-agent-production
+    name: day12-production-agent
     runtime: docker
     region: singapore
-    plan: starter
+    plan: free
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: APP_NAME
+        value: Production AI Agent
       - key: APP_VERSION
         value: "1.0.0"
       - key: OPENAI_API_KEY
-        sync: false
+        value: dummy
       - key: AGENT_API_KEY
         generateValue: true
       - key: JWT_SECRET
         generateValue: true
       - key: DAILY_BUDGET_USD
-        value: "5.0"
+        value: "1.0"
       - key: RATE_LIMIT_PER_MINUTE
-        value: "20"
+        value: "10"
+      - key: REDIS_URL
+        value: ""
