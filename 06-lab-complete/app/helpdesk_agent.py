@@ -1,7 +1,15 @@
 """Production adaptation of the Day 9 CS + IT Helpdesk agent."""
+import json
+import logging
 from dataclasses import dataclass
 from time import perf_counter
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from uuid import uuid4
+
+
+logger = logging.getLogger(__name__)
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 
 
 KNOWLEDGE_BASE = [
@@ -94,7 +102,74 @@ def _policy_check(question: str) -> list[str]:
     return exceptions
 
 
-def run_helpdesk_agent(question: str, history: list[dict] | None = None) -> AgentResult:
+def _extract_output_text(response: dict) -> str:
+    direct_text = response.get("output_text")
+    if direct_text:
+        return direct_text.strip()
+    for item in response.get("output", []):
+        for content in item.get("content", []):
+            if content.get("type") == "output_text" and content.get("text"):
+                return content["text"].strip()
+    return ""
+
+
+def _generate_llm_answer(
+    question: str,
+    history: list[dict],
+    evidence: str,
+    policy_exceptions: list[str],
+    api_key: str,
+    model: str,
+) -> str:
+    recent_history = history[-6:]
+    context = "\n".join(
+        f"{message.get('role', 'user')}: {message.get('content', '')}"
+        for message in recent_history
+    )
+    policy_text = "\n".join(policy_exceptions) or "No policy exception detected."
+    payload = {
+        "model": model,
+        "instructions": (
+            "You are a CS and IT Helpdesk Supervisor-Worker agent. Answer the "
+            "user's question directly and practically in the same language as "
+            "the user. Use supplied company evidence for policy-specific claims. "
+            "If the evidence does not contain a company policy answer, say so "
+            "briefly, then provide safe general technical guidance. Never invent "
+            "company rules, credentials, or completed actions. Keep the answer "
+            "under 250 words."
+        ),
+        "input": (
+            f"Recent conversation:\n{context or '(none)'}\n\n"
+            f"Retrieved company evidence:\n{evidence}\n\n"
+            f"Policy checks:\n{policy_text}\n\n"
+            f"Current user question:\n{question}"
+        ),
+        "max_output_tokens": 500,
+    }
+    request = Request(
+        OPENAI_RESPONSES_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=30) as response:
+            answer = _extract_output_text(json.load(response))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning("OpenAI synthesis unavailable; using rule fallback: %s", exc)
+        return ""
+    return answer
+
+
+def run_helpdesk_agent(
+    question: str,
+    history: list[dict] | None = None,
+    openai_api_key: str = "",
+    openai_model: str = "gpt-4.1-mini",
+) -> AgentResult:
     start = perf_counter()
     normalized = _normalize(question)
     follow_up_terms = ("that", "again", "previous", "summarize", "nhac lai", "tom tat")
@@ -137,6 +212,19 @@ def run_helpdesk_agent(question: str, history: list[dict] | None = None) -> Agen
 
     sources = list(dict.fromkeys(document["source"] for document in documents))
     confidence = round(sum(document["score"] for document in documents) / len(documents), 2)
+    if openai_api_key:
+        llm_answer = _generate_llm_answer(
+            question,
+            history or [],
+            evidence,
+            exceptions,
+            openai_api_key,
+            openai_model,
+        )
+        if llm_answer:
+            answer = llm_answer
+            workers.append("openai_synthesis_worker")
+            confidence = max(confidence, 0.8)
     workers.append("synthesis_worker")
     return AgentResult(
         answer=answer,

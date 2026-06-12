@@ -79,6 +79,8 @@ Set these before deploying:
 - `APP_VERSION=2.0.0`
 - `AGENT_SOURCE=VinUni Day 9 CS + IT Helpdesk Supervisor-Worker`
 - `AGENT_API_KEY`
+- `OPENAI_API_KEY` (server-side secret; never enter this in the browser UI)
+- `OPENAI_MODEL=gpt-4.1-mini`
 - `MONTHLY_BUDGET_USD=10.0`
 - `RATE_LIMIT_PER_MINUTE=10`
 - `REDIS_URL`
@@ -113,6 +115,7 @@ Recommended Blueprint deployment:
 6. Wait until `day12-helpdesk-agent` reports **Live**.
 7. Open the generated `onrender.com` URL. The demo UI is served at `/`.
 8. Reveal `AGENT_API_KEY` in the service Environment page and enter it in the UI.
+9. Set `OPENAI_API_KEY` in Render Environment to enable real LLM answers.
 
 The root Blueprint targets branch `temp`, uses `rootDir: 06-lab-complete`,
 and creates a free Render Key Value service for Redis-backed state.
