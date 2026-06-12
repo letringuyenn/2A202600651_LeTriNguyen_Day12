@@ -3,6 +3,9 @@ import unittest
 from urllib.error import HTTPError
 from unittest.mock import patch
 
+import redis
+
+from app import cost_guard
 from app.helpdesk_agent import run_helpdesk_agent
 
 
@@ -37,6 +40,17 @@ class HelpdeskAgentTests(unittest.TestCase):
 
         self.assertEqual(result.llm_status, "openai_quota_or_rate_limit")
         self.assertTrue(result.answer)
+
+    def test_cost_guard_returns_402_when_budget_is_exceeded(self):
+        with (
+            patch.object(cost_guard.settings, "monthly_budget_usd", 0.000001),
+            patch(
+                "app.cost_guard.redis_client",
+                side_effect=redis.RedisError("offline"),
+            ),
+        ):
+            with self.assertRaisesRegex(Exception, "402"):
+                cost_guard.check_and_record_cost("budget-test", 1000, 1000)
 
 
 if __name__ == "__main__":
