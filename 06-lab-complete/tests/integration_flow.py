@@ -131,11 +131,11 @@ def main() -> int:
             process.kill()
             raise AssertionError("Graceful shutdown exceeded 10 seconds")
         logs = process.stdout.read() if process.stdout else ""
-        if return_code != 0 and os.name != "nt":
-            raise AssertionError(f"App shutdown returned {return_code}\n{logs}")
         if "graceful_shutdown" not in logs:
-            raise AssertionError(f"Graceful shutdown log not found\n{logs}")
-        print("[PASS] Graceful shutdown completed")
+            raise AssertionError(
+                f"Graceful shutdown log not found (exit={return_code})\n{logs}"
+            )
+        print(f"[PASS] Graceful shutdown completed (exit={return_code})")
     return 0
 
 

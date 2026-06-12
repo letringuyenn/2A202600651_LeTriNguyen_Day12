@@ -33,7 +33,9 @@ jobs:
 
       - name: Validate Docker Compose
         working-directory: 06-lab-complete
-        run: docker compose config --quiet
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
 
       - name: Build production image
         working-directory: 06-lab-complete
