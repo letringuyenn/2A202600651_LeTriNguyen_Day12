@@ -105,6 +105,7 @@ class AskResponse(BaseModel):
     sources: list[str]
     confidence: float
     workers_called: list[str]
+    llm_status: str
     trace_id: str
     history_count: int
     timestamp: str
@@ -122,7 +123,12 @@ def ask_agent(body: AskRequest, _api_key: str = Depends(verify_api_key)):
     input_tokens = max(1, len(body.question.split()) * 2)
     check_and_record_cost(body.user_id, input_tokens, 0)
 
-    result = run_helpdesk_agent(body.question, history)
+    result = run_helpdesk_agent(
+        body.question,
+        history,
+        openai_api_key=settings.openai_api_key,
+        openai_model=settings.openai_model,
+    )
     output_tokens = max(1, len(result.answer.split()) * 2)
     check_and_record_cost(body.user_id, 0, output_tokens)
 
@@ -155,6 +161,7 @@ def ask_agent(body: AskRequest, _api_key: str = Depends(verify_api_key)):
         sources=result.sources,
         confidence=result.confidence,
         workers_called=result.workers_called,
+        llm_status=result.llm_status,
         trace_id=result.trace_id,
         history_count=len(history) + 2,
         timestamp=now,
@@ -179,6 +186,7 @@ def ready():
     return {
         "ready": True,
         "redis": "connected" if redis_available() else "local-fallback",
+        "llm": "configured" if settings.openai_api_key else "rule-fallback",
     }
 
 

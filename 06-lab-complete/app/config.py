@@ -25,6 +25,12 @@ class Settings:
     agent_api_key: str = field(
         default_factory=lambda: os.getenv("AGENT_API_KEY", "dev-key-change-me")
     )
+    openai_api_key: str = field(
+        default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
+    )
+    openai_model: str = field(
+        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    )
     allowed_origins: list[str] = field(
         default_factory=lambda: [
             origin.strip()

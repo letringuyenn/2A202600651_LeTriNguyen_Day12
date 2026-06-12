@@ -2,7 +2,7 @@ services:
   - type: web
     name: day12-helpdesk-agent
     runtime: docker
-    branch: temp
+    branch: main
     rootDir: 06-lab-complete
     region: singapore
     plan: free
@@ -19,6 +19,10 @@ services:
         value: VinUni Day 9 CS + IT Helpdesk Supervisor-Worker
       - key: AGENT_API_KEY
         generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
       - key: MONTHLY_BUDGET_USD
         value: "10.0"
       - key: RATE_LIMIT_PER_MINUTE
