@@ -8,7 +8,6 @@ services:
     plan: free
     healthCheckPath: /health
     autoDeployTrigger: commit
-    maxShutdownDelaySeconds: 30
     envVars:
       - key: ENVIRONMENT
         value: production
