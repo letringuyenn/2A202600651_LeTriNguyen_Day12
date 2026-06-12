@@ -1,18 +1,21 @@
 services:
   - type: web
-    name: day12-production-agent
+    name: day12-helpdesk-agent
     runtime: docker
+    branch: temp
+    rootDir: 06-lab-complete
     region: singapore
     plan: free
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeployTrigger: commit
+    maxShutdownDelaySeconds: 30
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: APP_NAME
         value: Production Helpdesk Agent
       - key: APP_VERSION
-        value: "2.0.0"
+        value: "2.1.0"
       - key: AGENT_SOURCE
         value: VinUni Day 9 CS + IT Helpdesk Supervisor-Worker
       - key: AGENT_API_KEY
@@ -21,3 +24,15 @@ services:
         value: "10.0"
       - key: RATE_LIMIT_PER_MINUTE
         value: "10"
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: day12-helpdesk-cache
+          property: connectionString
+
+  - type: keyvalue
+    name: day12-helpdesk-cache
+    region: singapore
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru

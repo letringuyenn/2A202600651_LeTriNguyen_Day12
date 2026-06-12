@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Production Helpdesk Supervisor-Worker Agent demo">
+  <title>Relay Desk | Helpdesk Agent</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap");
+
+    :root {
+      --ink: #14221d;
+      --muted: #64716b;
+      --paper: #f3f0e8;
+      --card: rgba(255, 255, 252, 0.86);
+      --line: rgba(20, 34, 29, 0.14);
+      --green: #0f7652;
+      --green-dark: #08573d;
+      --orange: #ee6c3b;
+      --shadow: 0 24px 70px rgba(34, 48, 41, 0.13);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(circle at 8% 8%, rgba(238, 108, 59, 0.16), transparent 28rem),
+        radial-gradient(circle at 92% 88%, rgba(15, 118, 82, 0.18), transparent 30rem),
+        var(--paper);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.3;
+      background-image: linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+
+    .shell {
+      position: relative;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 46px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 28px;
+      animation: reveal 0.55s ease both;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      color: white;
+      border-radius: 12px;
+      background: var(--green);
+      box-shadow: 5px 5px 0 var(--orange);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.55);
+      font: 500 12px "DM Mono", monospace;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9a9a9a;
+    }
+
+    .status.online .status-dot {
+      background: #22a06b;
+      box-shadow: 0 0 0 4px rgba(34, 160, 107, 0.13);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(420px, 1.22fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .intro, .console {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+      animation: reveal 0.65s 0.08s ease both;
+    }
+
+    .intro {
+      padding: clamp(28px, 4vw, 54px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--green);
+      font: 500 12px "DM Mono", monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 570px;
+      font-size: clamp(42px, 6vw, 74px);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    h1 span { color: var(--green); }
+
+    .lead {
+      max-width: 500px;
+      margin: 26px 0 34px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .worker-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .worker {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .worker b {
+      width: 29px;
+      height: 29px;
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      border: 1px solid rgba(15, 118, 82, 0.25);
+      border-radius: 9px;
+      background: rgba(15, 118, 82, 0.08);
+      font: 500 11px "DM Mono", monospace;
+    }
+
+    .console {
+      min-height: 660px;
+      display: flex;
+      flex-direction: column;
+      animation-delay: 0.16s;
+    }
+
+    .console-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .console-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .trace {
+      color: var(--muted);
+      font: 400 11px "DM Mono", monospace;
+    }
+
+    .messages {
+      flex: 1;
+      min-height: 300px;
+      max-height: 430px;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message {
+      max-width: 88%;
+      padding: 14px 16px;
+      border-radius: 17px;
+      line-height: 1.55;
+      font-size: 14px;
+      animation: pop 0.28s ease both;
+      white-space: pre-wrap;
+    }
+
+    .message.agent {
+      align-self: flex-start;
+      border: 1px solid var(--line);
+      border-bottom-left-radius: 5px;
+      background: white;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      color: white;
+      border-bottom-right-radius: 5px;
+      background: var(--green);
+    }
+
+    .meta {
+      margin-top: 9px;
+      color: var(--muted);
+      font: 400 10px "DM Mono", monospace;
+    }
+
+    .shortcuts {
+      display: flex;
+      gap: 8px;
+      padding: 0 24px 15px;
+      overflow-x: auto;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      background: transparent;
+      font: 600 11px "Manrope", sans-serif;
+      cursor: pointer;
+    }
+
+    .chip:hover { border-color: var(--green); color: var(--green); }
+
+    .form-area {
+      padding: 18px 24px 24px;
+      border-top: 1px solid var(--line);
+      background: rgba(243, 240, 232, 0.55);
+    }
+
+    .key-row {
+      display: grid;
+      grid-template-columns: 1fr 0.62fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.86);
+      font: 500 13px "DM Mono", monospace;
+    }
+
+    input { padding: 11px 13px; }
+    textarea {
+      min-height: 82px;
+      padding: 13px;
+      resize: vertical;
+      font-family: "Manrope", sans-serif;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(15, 118, 82, 0.1);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 11px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font: 400 10px "DM Mono", monospace;
+    }
+
+    .send {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 19px;
+      color: white;
+      background: var(--green);
+      font: 800 13px "Manrope", sans-serif;
+      cursor: pointer;
+      transition: transform 0.18s, background 0.18s;
+    }
+
+    .send:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .send:disabled { opacity: 0.58; cursor: wait; transform: none; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: scale(0.97) translateY(5px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @media (max-width: 860px) {
+      main { grid-template-columns: 1fr; }
+      .intro { min-height: auto; }
+      h1 { font-size: clamp(44px, 13vw, 68px); }
+      .console { min-height: 650px; }
+    }
+
+    @media (max-width: 540px) {
+      .shell { width: min(100% - 20px, 1180px); padding-top: 18px; }
+      header { margin-bottom: 18px; }
+      .intro, .console { border-radius: 21px; }
+      .intro { padding: 28px 23px; }
+      .key-row { grid-template-columns: 1fr; }
+      .console-head, .messages, .form-area { padding-left: 17px; padding-right: 17px; }
+      .shortcuts { padding-left: 17px; padding-right: 17px; }
+      .status span:last-child { display: none; }
+      .message { max-width: 94%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><span class="mark">R</span> Relay Desk</div>
+      <div class="status" id="status"><span class="status-dot"></span><span id="statusText">Checking API</span></div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">Day 12 · Production Agent</p>
+          <h1>Support, <span>routed right.</span></h1>
+          <p class="lead">
+            A productionized Supervisor-Worker agent for IT incidents, SLA questions,
+            refunds, and access-control policy. Every request is routed to the right specialist.
+          </p>
+        </div>
+        <div class="worker-list">
+          <div class="worker"><b>01</b> Retrieval worker · knowledge and SLA</div>
+          <div class="worker"><b>02</b> Policy worker · risk and compliance</div>
+          <div class="worker"><b>03</b> Human review · sensitive escalation</div>
+        </div>
+      </section>
+
+      <section class="console">
+        <div class="console-head">
+          <p class="console-title">Agent console</p>
+          <span class="trace" id="trace">TRACE · READY</span>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite">
+          <div class="message agent">
+            Hello. I can help with P1 incidents, account access, refunds, and support policy. What happened?
+            <div class="meta">SUPERVISOR · awaiting request</div>
+          </div>
+        </div>
+
+        <div class="shortcuts">
+          <button class="chip" data-question="What is the SLA for a P1 incident?">P1 incident SLA</button>
+          <button class="chip" data-question="Can I refund a Flash Sale license after 20 days?">Refund policy</button>
+          <button class="chip" data-question="I need admin access to the production database.">Production access</button>
+        </div>
+
+        <form class="form-area" id="askForm">
+          <div class="key-row">
+            <input id="apiKey" type="password" placeholder="Render AGENT_API_KEY" autocomplete="current-password" required>
+            <input id="userId" value="demo-user" maxlength="100" aria-label="User ID" required>
+          </div>
+          <textarea id="question" maxlength="2000" placeholder="Describe your support request..." required></textarea>
+          <div class="actions">
+            <span class="hint">ENTER to send · SHIFT+ENTER for new line</span>
+            <button class="send" id="sendButton" type="submit">Route request →</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const form = document.querySelector("#askForm");
+    const apiKey = document.querySelector("#apiKey");
+    const userId = document.querySelector("#userId");
+    const question = document.querySelector("#question");
+    const messages = document.querySelector("#messages");
+    const sendButton = document.querySelector("#sendButton");
+    const trace = document.querySelector("#trace");
+    const status = document.querySelector("#status");
+    const statusText = document.querySelector("#statusText");
+
+    function addMessage(text, kind, meta = "") {
+      const item = document.createElement("div");
+      item.className = `message ${kind}`;
+      item.textContent = text;
+      if (meta) {
+        const detail = document.createElement("div");
+        detail.className = "meta";
+        detail.textContent = meta;
+        item.appendChild(detail);
+      }
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch("/health");
+        if (!response.ok) throw new Error();
+        status.classList.add("online");
+        statusText.textContent = "API online";
+      } catch {
+        status.classList.remove("online");
+        statusText.textContent = "API unavailable";
+      }
+    }
+
+    async function askAgent(event) {
+      event.preventDefault();
+      const text = question.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      question.value = "";
+      sendButton.disabled = true;
+      sendButton.textContent = "Routing...";
+      trace.textContent = "TRACE · PROCESSING";
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey.value
+          },
+          body: JSON.stringify({ user_id: userId.value.trim(), question: text })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          const detail = typeof data.detail === "string" ? data.detail : "Request failed";
+          throw new Error(`${response.status}: ${detail}`);
+        }
+        const source = data.sources.length ? ` · ${data.sources.join(", ")}` : "";
+        addMessage(
+          data.answer,
+          "agent",
+          `${data.route.toUpperCase()} · confidence ${Math.round(data.confidence * 100)}%${source}`
+        );
+        trace.textContent = `TRACE · ${data.trace_id.slice(0, 12).toUpperCase()}`;
+      } catch (error) {
+        addMessage(
+          `Unable to complete the request: ${error.message}`,
+          "agent",
+          "SYSTEM · check API key and service status"
+        );
+        trace.textContent = "TRACE · ERROR";
+      } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = "Route request →";
+        question.focus();
+      }
+    }
+
+    form.addEventListener("submit", askAgent);
+    question.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        question.value = chip.dataset.question;
+        question.focus();
+      });
+    });
+
+    checkHealth();
+  </script>
+</body>
+</html>

@@ -1,23 +1,44 @@
-"""Simple daily cost guard for the lab."""
-import time
+"""Per-user monthly cost protection backed by Redis."""
+from datetime import datetime, timezone
 
+import redis
 from fastapi import HTTPException
 
 from app.config import settings
+from app.storage import redis_client
 
 
-_daily_cost = 0.0
-_cost_reset_day = time.strftime("%Y-%m-%d")
+_local_spend: dict[str, float] = {}
 
 
-def check_and_record_cost(input_tokens: int, output_tokens: int):
-    global _daily_cost, _cost_reset_day
-    today = time.strftime("%Y-%m-%d")
-    if today != _cost_reset_day:
-        _daily_cost = 0.0
-        _cost_reset_day = today
-    if _daily_cost >= settings.daily_budget_usd:
-        raise HTTPException(503, "Daily budget exhausted. Try tomorrow.")
-    cost = (input_tokens / 1000) * 0.00015 + (output_tokens / 1000) * 0.0006
-    _daily_cost += cost
+def estimate_cost(input_tokens: int, output_tokens: int) -> float:
+    return (input_tokens / 1000) * 0.00015 + (output_tokens / 1000) * 0.0006
 
+
+def check_and_record_cost(user_id: str, input_tokens: int, output_tokens: int) -> float:
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    key = f"budget:{user_id}:{month}"
+    cost = estimate_cost(input_tokens, output_tokens)
+    try:
+        client = redis_client()
+        current = float(client.get(key) or 0)
+        if current + cost > settings.monthly_budget_usd:
+            raise HTTPException(402, "Monthly agent budget exceeded")
+        new_total = float(client.incrbyfloat(key, cost))
+        client.expire(key, 32 * 24 * 3600)
+        return new_total
+    except redis.RedisError:
+        current = _local_spend.get(key, 0.0)
+        if current + cost > settings.monthly_budget_usd:
+            raise HTTPException(402, "Monthly agent budget exceeded")
+        _local_spend[key] = current + cost
+        return _local_spend[key]
+
+
+def get_monthly_spend(user_id: str) -> float:
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    key = f"budget:{user_id}:{month}"
+    try:
+        return float(redis_client().get(key) or 0)
+    except redis.RedisError:
+        return _local_spend.get(key, 0.0)
