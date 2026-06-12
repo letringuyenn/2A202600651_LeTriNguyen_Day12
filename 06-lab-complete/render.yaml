@@ -20,7 +20,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
-        value: gpt-4.1-mini
+        value: gpt-4o-mini
       - key: MONTHLY_BUDGET_USD
         value: "10.0"
       - key: RATE_LIMIT_PER_MINUTE

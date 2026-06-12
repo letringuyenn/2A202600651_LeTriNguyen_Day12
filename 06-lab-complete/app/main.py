@@ -105,6 +105,7 @@ class AskResponse(BaseModel):
     sources: list[str]
     confidence: float
     workers_called: list[str]
+    llm_status: str
     trace_id: str
     history_count: int
     timestamp: str
@@ -160,6 +161,7 @@ def ask_agent(body: AskRequest, _api_key: str = Depends(verify_api_key)):
         sources=result.sources,
         confidence=result.confidence,
         workers_called=result.workers_called,
+        llm_status=result.llm_status,
         trace_id=result.trace_id,
         history_count=len(history) + 2,
         timestamp=now,

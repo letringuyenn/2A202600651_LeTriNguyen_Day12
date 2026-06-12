@@ -60,6 +60,7 @@ class AgentResult:
     workers_called: list[str]
     trace_id: str
     latency_ms: int
+    llm_status: str
 
 
 def _normalize(text: str) -> str:
@@ -120,7 +121,7 @@ def _generate_llm_answer(
     policy_exceptions: list[str],
     api_key: str,
     model: str,
-) -> str:
+) -> tuple[str, str]:
     recent_history = history[-6:]
     context = "\n".join(
         f"{message.get('role', 'user')}: {message.get('content', '')}"
@@ -158,17 +159,30 @@ def _generate_llm_answer(
     try:
         with urlopen(request, timeout=30) as response:
             answer = _extract_output_text(json.load(response))
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+    except HTTPError as exc:
+        if exc.code == 401:
+            status = "invalid_openai_key"
+        elif exc.code == 429:
+            status = "openai_quota_or_rate_limit"
+        elif exc.code == 404:
+            status = "openai_model_unavailable"
+        else:
+            status = f"openai_http_{exc.code}"
         logger.warning("OpenAI synthesis unavailable; using rule fallback: %s", exc)
-        return ""
-    return answer
+        return "", status
+    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning("OpenAI synthesis unavailable; using rule fallback: %s", exc)
+        return "", "openai_connection_error"
+    if not answer:
+        return "", "openai_empty_response"
+    return answer, "openai_success"
 
 
 def run_helpdesk_agent(
     question: str,
     history: list[dict] | None = None,
     openai_api_key: str = "",
-    openai_model: str = "gpt-4.1-mini",
+    openai_model: str = "gpt-4o-mini",
 ) -> AgentResult:
     start = perf_counter()
     normalized = _normalize(question)
@@ -190,6 +204,7 @@ def run_helpdesk_agent(
             workers_called=["supervisor", "conversation_history", "synthesis_worker"],
             trace_id=f"trace-{uuid4().hex[:12]}",
             latency_ms=int((perf_counter() - start) * 1000),
+            llm_status="conversation_context",
         )
 
     route, reason, hitl = _supervisor(question)
@@ -212,8 +227,9 @@ def run_helpdesk_agent(
 
     sources = list(dict.fromkeys(document["source"] for document in documents))
     confidence = round(sum(document["score"] for document in documents) / len(documents), 2)
+    llm_status = "openai_not_configured"
     if openai_api_key:
-        llm_answer = _generate_llm_answer(
+        llm_answer, llm_status = _generate_llm_answer(
             question,
             history or [],
             evidence,
@@ -235,4 +251,5 @@ def run_helpdesk_agent(
         workers_called=workers,
         trace_id=f"trace-{uuid4().hex[:12]}",
         latency_ms=int((perf_counter() - start) * 1000),
+        llm_status=llm_status,
     )

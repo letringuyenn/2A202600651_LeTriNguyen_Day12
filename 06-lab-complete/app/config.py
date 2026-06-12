@@ -29,7 +29,7 @@ class Settings:
         default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
     )
     openai_model: str = field(
-        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     )
     allowed_origins: list[str] = field(
         default_factory=lambda: [

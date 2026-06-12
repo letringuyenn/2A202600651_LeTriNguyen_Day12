@@ -80,7 +80,7 @@ Set these before deploying:
 - `AGENT_SOURCE=VinUni Day 9 CS + IT Helpdesk Supervisor-Worker`
 - `AGENT_API_KEY`
 - `OPENAI_API_KEY` (server-side secret; never enter this in the browser UI)
-- `OPENAI_MODEL=gpt-4.1-mini`
+- `OPENAI_MODEL=gpt-4o-mini`
 - `MONTHLY_BUDGET_USD=10.0`
 - `RATE_LIMIT_PER_MINUTE=10`
 - `REDIS_URL`

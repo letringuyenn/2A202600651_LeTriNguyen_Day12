@@ -482,10 +482,13 @@
         const engine = data.workers_called.includes("openai_synthesis_worker")
           ? "OPENAI SYNTHESIS"
           : data.route.toUpperCase();
+        const llmStatus = data.llm_status === "openai_success"
+          ? ""
+          : ` · ${data.llm_status.replaceAll("_", " ").toUpperCase()}`;
         addMessage(
           data.answer,
           "agent",
-          `${engine} · confidence ${Math.round(data.confidence * 100)}%${source}`
+          `${engine}${llmStatus} · confidence ${Math.round(data.confidence * 100)}%${source}`
         );
         trace.textContent = `TRACE · ${data.trace_id.slice(0, 12).toUpperCase()}`;
       } catch (error) {
