@@ -1,10 +1,10 @@
 # Deployment Information
 
 ## Public URL
-TODO - fill after Railway/Render deployment
+https://day12-helpdesk-agent.onrender.com
 
 ## Platform
-Railway recommended for the fastest path, or Render if you prefer Blueprint-style deployment.
+Render Blueprint with GitHub Actions CI/CD.
 
 ## Agent Project
 
@@ -13,6 +13,10 @@ from the previous VinUni Day 9 lab.
 
 ## Verified Status
 
+- Bonus GitHub Actions CI/CD: lint, unit-test coverage, Docker build, deploy, and public smoke test
+- Ruff lint: passed
+- Unit tests: `7/7` passed
+- Branch coverage: at least `55%`; XML report uploaded as a GitHub Actions artifact
 - Production checker: `20/20` checks passed (`100%`)
 - Docker image: built successfully with a multi-stage Dockerfile
 - Docker Compose: agent and Redis containers are healthy
@@ -22,6 +26,24 @@ from the previous VinUni Day 9 lab.
 - `POST /ask`: `401` without an API key
 - Conversation history: persisted in Redis and reused for follow-up questions
 - Rate limit: requests 1-10 returned `200`; request 11 returned `429`
+
+## Bonus CI/CD Demo
+
+Workflow: `.github/workflows/day12-cicd.yml`
+
+The workflow runs on every push and pull request to `main`:
+
+1. Part 03 validates deployment files, Docker Compose, and builds the image.
+2. Part 04 runs Ruff lint and unit tests with branch coverage.
+3. Part 05 starts Redis and tests the live security/reliability flow.
+4. The score job publishes the automated result for Parts 03-05.
+5. The CD job deploys through `RENDER_DEPLOY_HOOK_URL` when configured.
+6. The CD demo verifies `/health`, `/ready`, and the HTML UI on the public URL.
+
+Optional GitHub repository configuration:
+
+- Secret `RENDER_DEPLOY_HOOK_URL`: Render service deploy hook.
+- Variable `RENDER_SERVICE_URL`: defaults to the public URL above.
 
 ## Local Setup
 

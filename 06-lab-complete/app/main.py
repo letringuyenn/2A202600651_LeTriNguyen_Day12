@@ -24,7 +24,6 @@ from app.storage import (
     redis_available,
 )
 
-
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
     format='{"timestamp":"%(asctime)s","level":"%(levelname)s","message":"%(message)s"}',

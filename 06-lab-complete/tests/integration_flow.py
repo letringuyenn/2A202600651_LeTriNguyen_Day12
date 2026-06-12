@@ -9,7 +9,6 @@ import urllib.error
 import urllib.request
 from uuid import uuid4
 
-
 BASE_URL = "http://127.0.0.1:8765"
 API_KEY = "ci-agent-key"
 
@@ -129,7 +128,7 @@ def main() -> int:
             return_code = process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             process.kill()
-            raise AssertionError("Graceful shutdown exceeded 10 seconds")
+            raise AssertionError("Graceful shutdown exceeded 10 seconds") from None
         logs = process.stdout.read() if process.stdout else ""
         if "graceful_shutdown" not in logs:
             raise AssertionError(

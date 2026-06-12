@@ -8,7 +8,6 @@ import redis
 
 from app.config import settings
 
-
 logger = logging.getLogger(__name__)
 _client: redis.Redis | None = None
 _local_history: dict[str, deque[dict[str, Any]]] = defaultdict(deque)

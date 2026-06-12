@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from app.config import settings
 from app.storage import redis_client
 
-
 _local_windows: dict[str, deque[float]] = defaultdict(deque)
 
 

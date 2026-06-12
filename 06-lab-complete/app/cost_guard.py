@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from app.config import settings
 from app.storage import redis_client
 
-
 _local_spend: dict[str, float] = {}
 
 
@@ -30,7 +29,7 @@ def check_and_record_cost(user_id: str, input_tokens: int, output_tokens: int) -
     except redis.RedisError:
         current = _local_spend.get(key, 0.0)
         if current + cost > settings.monthly_budget_usd:
-            raise HTTPException(402, "Monthly agent budget exceeded")
+            raise HTTPException(402, "Monthly agent budget exceeded") from None
         _local_spend[key] = current + cost
         return _local_spend[key]
 

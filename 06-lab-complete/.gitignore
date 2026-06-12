@@ -4,4 +4,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-
+coverage.xml
+.coverage
+htmlcov/

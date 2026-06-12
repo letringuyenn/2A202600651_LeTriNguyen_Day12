@@ -1,11 +1,13 @@
 """Unit tests for the production Helpdesk Supervisor-Worker agent."""
 import unittest
-from urllib.error import HTTPError
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 import redis
+from fastapi import HTTPException
 
-from app import cost_guard
+from app import cost_guard, rate_limiter, storage
+from app.auth import verify_api_key
 from app.helpdesk_agent import run_helpdesk_agent
 
 
@@ -51,6 +53,40 @@ class HelpdeskAgentTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(Exception, "402"):
                 cost_guard.check_and_record_cost("budget-test", 1000, 1000)
+
+    def test_api_key_authentication(self):
+        with patch("app.auth.settings.agent_api_key", "expected-key"):
+            self.assertEqual(verify_api_key("expected-key"), "expected-key")
+            with self.assertRaises(HTTPException) as context:
+                verify_api_key("wrong-key")
+        self.assertEqual(context.exception.status_code, 401)
+
+    def test_rate_limit_local_fallback_returns_429(self):
+        user_id = "rate-limit-test"
+        rate_limiter._local_windows.pop(user_id, None)
+        with (
+            patch.object(rate_limiter.settings, "rate_limit_per_minute", 2),
+            patch(
+                "app.rate_limiter.redis_client",
+                side_effect=redis.RedisError("offline"),
+            ),
+        ):
+            rate_limiter.check_rate_limit(user_id)
+            rate_limiter.check_rate_limit(user_id)
+            with self.assertRaises(HTTPException) as context:
+                rate_limiter.check_rate_limit(user_id)
+        self.assertEqual(context.exception.status_code, 429)
+
+    def test_storage_local_fallback_preserves_history(self):
+        user_id = "storage-test"
+        storage._local_history.pop(user_id, None)
+        with patch(
+            "app.storage.redis_client",
+            side_effect=redis.RedisError("offline"),
+        ):
+            storage.append_history(user_id, {"role": "user", "content": "hello"})
+            history = storage.get_history(user_id)
+        self.assertEqual(history, [{"role": "user", "content": "hello"}])
 
 
 if __name__ == "__main__":

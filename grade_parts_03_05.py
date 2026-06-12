@@ -58,6 +58,9 @@ def grade_part_03() -> bool:
     step_ids = {step.get("id") for step in cloudbuild.get("steps", [])}
     grader.check("Cloud Build test/build/push/deploy stages", {"test", "build", "push", "deploy"} <= step_ids, 4)
     grader.check("Deployment documentation", (APP / "DEPLOYMENT.md").exists(), 3)
+    workflow = text(ROOT / ".github/workflows/day12-cicd.yml")
+    grader.check("GitHub Actions CD job", "deploy-render:" in workflow, 3)
+    grader.check("Public deployment smoke test", "Demo deployed endpoints" in workflow, 3)
     return grader.finish()
 
 
@@ -77,6 +80,9 @@ def grade_part_04() -> bool:
     grader.check("Input validation limits", "max_length=2000" in main, 3)
     grader.check("Secrets loaded from environment", "os.getenv" in config, 3)
     grader.check("No real .env tracked by template", "OPENAI_API_KEY=" in text(APP / ".env.example"), 1)
+    workflow = text(ROOT / ".github/workflows/day12-cicd.yml")
+    grader.check("CI lint stage", "ruff check" in workflow, 3)
+    grader.check("Unit test coverage stage", "coverage report" in workflow, 3)
     return grader.finish()
 
 

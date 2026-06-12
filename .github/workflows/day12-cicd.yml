@@ -55,14 +55,28 @@ jobs:
 
       - name: Install dependencies
         working-directory: 06-lab-complete
-        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+        run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
+
+      - name: Lint production code
+        working-directory: 06-lab-complete
+        run: ruff check app tests
 
       - name: Grade security implementation
         run: python grade_parts_03_05.py --part 04
 
-      - name: Run security unit tests
+      - name: Run unit tests with coverage
         working-directory: 06-lab-complete
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+        run: |
+          coverage run -m unittest discover -s tests -p "test_*.py" -v
+          coverage report
+          coverage xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: day12-coverage-report
+          path: 06-lab-complete/coverage.xml
+          if-no-files-found: error
 
   part-05-reliability:
     name: "Part 05: Scaling & Reliability"
@@ -141,3 +155,35 @@ jobs:
           fi
           curl --fail --show-error --silent --request POST "$RENDER_DEPLOY_HOOK_URL"
           echo "Render deployment triggered."
+
+      - name: Wait for Render deployment
+        env:
+          DEPLOYED_URL: ${{ vars.RENDER_SERVICE_URL || 'https://day12-helpdesk-agent.onrender.com' }}
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error "$DEPLOYED_URL/health" > health.json; then
+              cat health.json
+              exit 0
+            fi
+            echo "Waiting for Render deployment ($attempt/30)..."
+            sleep 10
+          done
+          echo "Render health check did not become ready."
+          exit 1
+
+      - name: Demo deployed endpoints
+        env:
+          DEPLOYED_URL: ${{ vars.RENDER_SERVICE_URL || 'https://day12-helpdesk-agent.onrender.com' }}
+        run: |
+          curl --fail --silent --show-error "$DEPLOYED_URL/health"
+          echo
+          curl --fail --silent --show-error "$DEPLOYED_URL/ready"
+          echo
+          curl --fail --silent --show-error "$DEPLOYED_URL/" | grep --quiet "Relay Desk"
+          {
+            echo "## CD deployment demo"
+            echo "- Public URL: $DEPLOYED_URL"
+            echo "- Health endpoint: passed"
+            echo "- Readiness endpoint: passed"
+            echo "- Demo HTML UI: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
