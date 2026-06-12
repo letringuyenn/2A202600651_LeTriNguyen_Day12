@@ -102,13 +102,31 @@ railway domain
 ```
 
 ### Render
-1. Push the repo to GitHub.
-2. Create a new Blueprint or Docker Web Service.
-3. Set the root directory to `06-lab-complete`.
-4. Use `render.yaml`, then verify generated secrets in the dashboard.
-5. Deploy and copy the public URL.
+
+Recommended Blueprint deployment:
+
+1. Push the latest code to branch `temp`.
+2. Open <https://dashboard.render.com/blueprints>.
+3. Select **New Blueprint Instance**.
+4. Connect the GitHub repository `2A202600651_LeTriNguyen_Day12`.
+5. Render detects the root `render.yaml`; review and select **Apply**.
+6. Wait until `day12-helpdesk-agent` reports **Live**.
+7. Open the generated `onrender.com` URL. The demo UI is served at `/`.
+8. Reveal `AGENT_API_KEY` in the service Environment page and enter it in the UI.
+
+The root Blueprint targets branch `temp`, uses `rootDir: 06-lab-complete`,
+and creates a free Render Key Value service for Redis-backed state.
+
+For a manual Docker Web Service, select branch `temp`, set Root Directory
+to `06-lab-complete`, set the health check path to `/health`, and add the
+environment variables listed above.
 
 ## Endpoints to Test After Deploy
+
+### Demo UI
+```text
+https://YOUR_PUBLIC_URL/
+```
 
 ### Health
 ```powershell

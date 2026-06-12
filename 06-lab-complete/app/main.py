@@ -4,10 +4,12 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.auth import verify_api_key
@@ -29,6 +31,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 START_TIME = time.time()
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 _is_ready = False
 _request_count = 0
 _error_count = 0
@@ -109,12 +112,7 @@ class AskResponse(BaseModel):
 
 @app.get("/")
 def root():
-    return {
-        "app": settings.app_name,
-        "version": settings.app_version,
-        "agent_source": settings.agent_source,
-        "endpoints": ["/ask", "/health", "/ready", "/metrics"],
-    }
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post("/ask", response_model=AskResponse)
