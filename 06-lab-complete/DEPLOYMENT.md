@@ -6,15 +6,22 @@ TODO - fill after Railway/Render deployment
 ## Platform
 Railway recommended for the fastest path, or Render if you prefer Blueprint-style deployment.
 
+## Agent Project
+
+This service productionizes the **CS + IT Helpdesk Supervisor-Worker Agent**
+from the previous VinUni Day 9 lab.
+
 ## Verified Status
 
 - Production checker: `20/20` checks passed (`100%`)
 - Docker image: built successfully with a multi-stage Dockerfile
 - Docker Compose: agent and Redis containers are healthy
 - `GET /health`: `200`, status `ok`
-- `GET /ready`: `200`, ready `true`
+- `GET /ready`: `200`, ready `true`, Redis `connected`
 - `POST /ask`: `200` with a valid `X-API-Key`
 - `POST /ask`: `401` without an API key
+- Conversation history: persisted in Redis and reused for follow-up questions
+- Rate limit: requests 1-10 returned `200`; request 11 returned `429`
 
 ## Local Setup
 
@@ -68,13 +75,12 @@ If Docker asks for a login or hits image pull limits, sign in to Docker Hub or r
 Set these before deploying:
 
 - `ENVIRONMENT=production`
-- `APP_NAME=Production AI Agent`
-- `APP_VERSION=1.0.0`
-- `OPENAI_API_KEY` or leave empty to use the mock LLM
+- `APP_NAME=Production Helpdesk Agent`
+- `APP_VERSION=2.0.0`
+- `AGENT_SOURCE=VinUni Day 9 CS + IT Helpdesk Supervisor-Worker`
 - `AGENT_API_KEY`
-- `JWT_SECRET`
-- `DAILY_BUDGET_USD`
-- `RATE_LIMIT_PER_MINUTE`
+- `MONTHLY_BUDGET_USD=10.0`
+- `RATE_LIMIT_PER_MINUTE=10`
 - `REDIS_URL`
 - `PORT`
 
@@ -119,8 +125,19 @@ curl https://YOUR_PUBLIC_URL/ready
 curl -X POST https://YOUR_PUBLIC_URL/ask `
   -H "X-API-Key: YOUR_KEY" `
   -H "Content-Type: application/json" `
-  -d "{\"question\":\"Hello\"}"
+  -d "{\"user_id\":\"student-651\",\"question\":\"What is the SLA for a P1 incident?\"}"
 ```
+
+Expected response fields include:
+
+- `answer`
+- `route`
+- `route_reason`
+- `sources`
+- `confidence`
+- `workers_called`
+- `trace_id`
+- `history_count`
 
 ## Notes
 

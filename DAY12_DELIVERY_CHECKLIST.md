@@ -10,9 +10,9 @@
 
 Submit a **GitHub repository** containing:
 
-### 1. Mission Answers (40 points)
+### 1. Codelab Solutions (40 points)
 
-Create a file `MISSION_ANSWERS.md` with your answers to all exercises:
+Create a file `Solution.md` with your answers to all exercises:
 
 ```markdown
 # Day 12 Lab - Mission Answers
@@ -144,7 +144,7 @@ curl -X POST https://your-agent.railway.app/ask \
 ##  Pre-Submission Checklist
 
 - [ ] Repository is public (or instructor has access)
-- [ ] `MISSION_ANSWERS.md` completed with all exercises
+- [ ] `Solution.md` completed with all exercises from Part 1 to Part 5
 - [ ] `DEPLOYMENT.md` has working public URL
 - [ ] All source code in `app/` directory
 - [ ] `README.md` has clear setup instructions
@@ -191,7 +191,7 @@ done
 https://github.com/your-username/day12-agent-deployment
 ```
 
-**Deadline:** 17/4/2026
+**Deadline:** Before 24:00 on 12/06/2026
 
 ---
 

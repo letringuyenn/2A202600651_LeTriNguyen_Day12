@@ -5,8 +5,11 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=staging
-      - APP_NAME=Production AI Agent
+      - APP_NAME=Production Helpdesk Agent
+      - APP_VERSION=2.0.0
       - REDIS_URL=redis://redis:6379/0
+      - RATE_LIMIT_PER_MINUTE=10
+      - MONTHLY_BUDGET_USD=10.0
     env_file:
       - .env
     depends_on:
@@ -23,9 +26,14 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
+
+volumes:
+  redis-data:
